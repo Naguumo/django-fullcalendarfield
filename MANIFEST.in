@@ -1,0 +1,2 @@
+include *.text *.ini *.cfg *.md
+recursive-include fullcalendarfield *.ico *.png *.css *.gif *.jpg *txt *.js *.html *.xml
