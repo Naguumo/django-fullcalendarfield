@@ -1,0 +1,169 @@
+{% load static %}
+<link href=" {% static 'js/fullcalendar-4.2.0/packages/core/main.css' %}" rel='stylesheet'/>
+<link href=" {% static 'js/fullcalendar-4.2.0/packages/bootstrap/main.css' %}" rel='stylesheet'/>
+<link href=" {% static 'js/fullcalendar-4.2.0/packages/daygrid/main.css' %}" rel='stylesheet'/>
+<link href=" {% static 'js/fullcalendar-4.2.0/packages/timegrid/main.css' %}" rel='stylesheet'/>
+<link href=" {% static 'js/fullcalendar-4.2.0/packages/list/main.css' %}" rel='stylesheet'/>
+
+
+<script src=" {% static 'js/fullcalendar-4.2.0/packages/core/main.js' %}"></script>
+<script src=" {% static 'js/fullcalendar-4.2.0/packages/bootstrap/main.js' %}"></script>
+<script src=" {% static 'js/fullcalendar-4.2.0/packages/interaction/main.js' %}"></script>
+<script src=" {% static 'js/fullcalendar-4.2.0/packages/daygrid/main.js' %}"></script>
+<script src=" {% static 'js/fullcalendar-4.2.0/packages/timegrid/main.js' %}"></script>
+<script src=" {% static 'js/fullcalendar-4.2.0/packages/list/main.js' %}"></script>
+<style>
+    .fc-today {
+        background: #FFF !important;
+    }
+</style>
+
+<input hidden name="{{ widget.name }}"{% if widget.value != None %}
+       value="{{ widget.value|stringformat:'s' }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+<div id='calendar'></div>
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addModalLabel">Add event</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input class="form-control" type="text" id="event-title" placeholder="Event name">
+                <select class="form-control" id="event-color">
+                    <option value="Blue">Color</option>
+                    <option value="Black">Black</option>
+                    <option value="Purple">Purple</option>
+                    <option value="Orange">Orange</option>
+                    <option value="Blue">Blue</option>
+                    <option value="Red">Red</option>
+                    <option value="Green">Green</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="addEvent" data-dismiss="modal" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                Do you want to delete the event?
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="deleteEventYes" data-dismiss="modal" class="btn btn-primary">Yes</button>
+                <button type="button" id="deleteEventNo" data-dismiss="modal" class="btn btn-secondary">No</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        let calendarEl = document.getElementById('calendar')
+        let calendar = new FullCalendar.Calendar(calendarEl, {
+            plugins: ['interaction', 'dayGrid', 'timeGrid', 'list', 'bootstrap'],
+            themeSystem: 'bootstrap',
+            defaultView: 'timeGridWeek',
+            header: {
+                left: 'prev, next today',
+                center: 'title',
+                right: 'timeGridWeek, listWeek, timeGridTwoDay'
+            },
+            eventTextColor: 'white',
+            timeZone: 'local',
+            validRange: function (nowDate) {
+                return {
+                    start: nowDate,
+                }
+            },
+            navLinks: true,
+            selectable: true,
+            selectMirror: true,
+            select: function (arg) {
+                $('#addModal').modal();
+                $('#addEvent').click(arg, function () {
+                    let title = $("#event-title")
+                    let color = $("#event-color")
+                    if (title.val() && color.val()) {
+                        calendar.addEvent({
+                            title: title.val(),
+                            color: color.val(),
+                            start: arg.start,
+                            end: arg.end,
+                            allDay: arg.allDay
+                        })
+                    }
+                    calendar.unselect()
+                    toJSON(calendar.getEvents())
+                    title.val('')
+                    color.val('')
+                    $('#addEvent').off();
+                });
+
+            },
+            eventClick: function (arg) {
+                $('#deleteModal').modal();
+                $('#deleteEventYes').click(arg, function () {
+                    arg.event.remove();
+                    toJSON(calendar.getEvents())
+                    $('#addEvent').off();
+                });
+            },
+            eventResize: function (arg) {
+                toJSON(calendar.getEvents())
+            },
+            editable: true,
+            eventLimit: true, // allow "more" link when too many events
+            views: {
+                timeGridWeek: {
+                    type: 'timeGrid',
+                    duration: {days: 7},
+                    buttonText: 'Week',
+                    minTime: '08:00:00',
+                    maxTime: '20:00:00'
+                },
+                listWeek: {
+                    type: 'listWeek',
+                    duration: {days: 7},
+                    buttonText: 'List',
+                    minTime: '08:00:00',
+                    maxTime: '20:00:00'
+                },
+                timeGridTwoDay: {
+                    type: 'timeGrid',
+                    duration: {days: 2},
+                    buttonText: '2 day',
+                    minTime: '08:00:00',
+                    maxTime: '20:00:00'
+                }
+            },
+            events: {{ widget.value|safe }}
+        })
+        calendar.render();
+    })
+
+
+    function toJSON(arr) {
+        console.log(arr)
+        let events = []
+        arr.forEach(function (value) {
+            console.log(value)
+            events.push({
+                start: value.start,
+                end: value.end,
+                title: value.title,
+                backgroundColor: value.backgroundColor,
+                borderColor: value.borderColor,
+                allDay: value.allDay
+            })
+        })
+        document.getElementsByName('{{ widget.name }}')[0].value = JSON.stringify(events)
+    }
+</script>

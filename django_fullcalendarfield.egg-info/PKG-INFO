@@ -1,0 +1,12 @@
+Metadata-Version: 1.0
+Name: django-fullcalendarfield
+Version: 0.0
+Summary: A Model Friendly Implementation of FullCalendar using only JSON to save
+Home-page: https://github.com/Naguumo/django-fullcalendarfield
+Author: Ishaan Bharal
+Author-email: ishbharal@gmail.com
+License: MIT
+Description: # django-fullcalendarfield
+        A Model Friendly Implementation of FullCalendar using only JSON to save
+        
+Platform: UNKNOWN

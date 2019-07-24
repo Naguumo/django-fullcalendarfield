@@ -1,0 +1,15 @@
+MANIFEST.in
+README.md
+setup.py
+django_fullcalendarfield.egg-info/PKG-INFO
+django_fullcalendarfield.egg-info/SOURCES.txt
+django_fullcalendarfield.egg-info/dependency_links.txt
+django_fullcalendarfield.egg-info/requires.txt
+django_fullcalendarfield.egg-info/top_level.txt
+fullcalendarfield/__init__.py
+fullcalendarfield/admin.py
+fullcalendarfield/apps.py
+fullcalendarfield/models.py
+fullcalendarfield/tests.py
+fullcalendarfield/views.py
+fullcalendarfield/migrations/__init__.py
