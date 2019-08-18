@@ -1,0 +1,161 @@
+{% load static %}
+
+<input hidden name="{{ widget.name }}"
+       {% if widget.value != None %} value="{{ widget.value|stringformat:'s' }}"{% endif %}
+       {% include "django/forms/widgets/attrs.html" %}>
+<div id='calendar'></div>
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addModalLabel">Add event</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <label for="event-title">Name</label>
+                <input class="form-control" type="text" id="event-title" placeholder="Event name">
+                <label for="event-color">Color</label>
+                <input id="event-color" type="color" value="#ff0000">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="addEvent" data-dismiss="modal" class="btn btn-primary">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <label for="event-title-2"></label>
+                <input class="form-control" type="text" id="event-title-2" placeholder="Event Name">
+                <label for="event-color">Color</label>
+                <input id="event-color-2" type="color" value="#ff0000">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="editEvent" data-dismiss="modal" class="btn btn-primary">Edit</button>
+                <button type="button" id="deleteEventYes" data-dismiss="modal" class="btn btn-warning">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let calendar = null;
+    let vals = {{ widget.value|safe }};
+
+    function jsonizeCalendar(arr) {
+        let events = [];
+        arr.forEach(function (value) {
+            events.push({
+                start: value.start,
+                end: value.end,
+                title: value.title,
+                backgroundColor: value.backgroundColor,
+                borderColor: value.borderColor,
+                allDay: value.allDay
+            })
+        });
+        document.getElementsByName('{{ widget.name }}')[0].value = JSON.stringify(events);
+    }
+
+    function getCalendarEvents() {
+        return vals;
+    }
+
+    function generateCalendar() {
+        return {
+            plugins: ['interaction', 'dayGrid', 'timeGrid', 'list', 'bootstrap'],
+            themeSystem: 'bootstrap',
+            defaultView: 'timeGridWeek',
+            header: {
+                left: 'prev, next today',
+                center: 'title',
+                right: 'timeGridWeek, listWeek, timeGridTwoDay'
+            },
+            eventTextColor: 'white',
+            timeZone: false,
+            navLinks: true,
+            selectable: true,
+            selectMirror: true,
+            select: function (arg) {
+                $('#addModal').modal();
+                $('#addEvent').click(arg, function () {
+                    let title = $("#event-title");
+                    let color = $("#event-color");
+                    if (title.val() && color.val()) {
+                        calendar.addEvent({
+                            title: title.val(),
+                            color: color.val(),
+                            start: arg.start,
+                            end: arg.end,
+                            allDay: arg.allDay
+                        })
+                    }
+                    calendar.unselect();
+                    jsonizeCalendar(calendar.getEvents());
+                    title.val('');
+                    color.val('');
+                    $('#addEvent').off();
+                });
+
+            },
+	        eventDrop: function(arg){
+                jsonizeCalendar(calendar.getEvents());
+	        },
+            eventClick: function (arg) {
+                $('#deleteModal').modal();
+                let title = $("#event-title-2");
+                let color = $("#event-color-2");
+                title.val(arg.event.title);
+                color.val(arg.event.backgroundColor);
+                $('#editEvent').click(arg, function () {
+                    arg.event.setProp('title', title.val());
+                    arg.event.setProp('backgroundColor', color.val());
+                    toJSON(calendar.getEvents());
+                    $('#editEvent').off();
+                    $('#deleteEventYes').off();
+                });
+                document.getElementById('deleteEventYes').addEventListener('click', function () {
+                    arg.event.remove();
+                    jsonizeCalendar(calendar.getEvents());
+                    $('#editEvent').off();
+                    document.getElementById('deleteEventYes').off();
+                });
+            },
+            eventResize: function (arg) {
+                jsonizeCalendar(calendar.getEvents());
+            },
+            editable: true,
+            eventLimit: true,
+            views: {
+                timeGridWeek: {
+                    type: 'timeGrid',
+                    duration: {days: 7},
+                    buttonText: 'Week',
+                    allDaySlot: false,
+                    minTime: '08:00:00',
+                    maxTime: '20:00:00'
+                },
+                listWeek: {
+                    type: 'listWeek',
+                    duration: {days: 7},
+                    buttonText: 'List',
+                    minTime: '08:00:00',
+                    maxTime: '20:00:00'
+                },
+            },
+            events: getCalendarEvents()
+        };
+    }
+
+    document.addEventListener("DOMContentLoaded", function(){
+        calendar = new FullCalendar.Calendar(document.getElementById('calendar'), generateCalendar());
+        calendar.render();
+        jsonizeCalendar(calendar.getEvents());
+    });
+</script>
